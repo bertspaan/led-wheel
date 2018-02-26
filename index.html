@@ -99,45 +99,49 @@
         <select id="select-pattern">
         </select>
       </div>
-      <!-- <div>
+      <div>
         <label for="range-parameter">Parameter:</label>
         <input id="range-parameter" type="range" min="0" max="1" step="0.01" value="0.5">
-      </div> -->
+      </div>
     </div>
     <script>
-      var bpm = 60
+      var ledCount = 20
 
       var width = 600
       var height = width
 
       var patterns = {
-        'Single light': function (wheelAngle, ledAngle, beat, index) {
+        'Single light': function (ledCount, wheelAngle, ledAngle, beat, parameter) {
           var diff = Math.abs(wheelAngle - ledAngle)
-          if (diff < 10) {
+          if (diff < (360 / (ledCount * 2))) {
             return 1
           }
         },
-        'Front': function (wheelAngle, ledAngle, beat, index) {
+        'Front': function (ledCount, wheelAngle, ledAngle, beat, parameter) {
           var diff = Math.abs(ledAngle - 180)
-          if (diff < 10) {
+          var width = 360 / ledCount * parameter * 8
+
+          if (diff < width) {
             return 1
-          } else if (diff < 30) {
-            return -(diff - 10) / 20 + 1
+          } else if (diff < width * 2) {
+            return -(diff - width) / (width * 2) + 1
           }
         },
-        alternating: function (wheelAngle, ledAngle, beat, index) {
-          return (index + (beat % 2)) % 2
+        'Sine wave': function (ledCount, wheelAngle, ledAngle, beat, parameter) {
+          var period = Math.round(parameter * 10)
+          return (Math.sin(toRad((ledAngle - 45) * period)) + 1) / 2
         },
-        'Sine wave': function (wheelAngle, ledAngle, beat, index) {
-          return (Math.sin(toRad((ledAngle - 45) * 2)) + 1) / 2
-        },
-        'Left/Right': function (wheelAngle, ledAngle, beat, index) {
-          return (beat % 2) ? ledAngle <= 180 : ledAngle > 180
+        'Alternating': function (ledCount, wheelAngle, ledAngle, beat, parameter) {
+          var buckets = Math.max(1, Math.round(parameter * ledCount) * 2)
+          var bucketSize = 360 / buckets
+          var times = Math.floor(ledAngle / bucketSize)
+          return 1 - ((times + (beat % 2)) % 2)
         }
       }
 
       var wheel = document.getElementById('wheel')
 
+      var parameter = 0
       var beat = 0
       var bpm = 0
       var animationRps = 0
@@ -149,8 +153,7 @@
       var lastBeatTimestamp = 0
       var lastAnimationAngleTimestamp = 0
 
-      var lockRps = false
-      var ledCount = 20
+      var lockRps = true
 
       var selectedPattern = Object.keys(patterns)[0]
 
@@ -170,7 +173,6 @@
         .text(function (d) {
           return d
         })
-
 
       function toDeg (rad) {
         return rad * (180 / Math.PI)
@@ -196,8 +198,8 @@
           .attr('class', 'light')
           .attr('points', [
             [midX * 1.5, midY],
-            [midX * 1.9, midY - 40],
-            [midX * 1.9, midY + 40]
+            [midX * 2, midY - 40],
+            [midX * 2, midY + 40]
           ].map(function(coordinate) {
             return coordinate.join(',')
           }).join(' '))
@@ -209,10 +211,10 @@
           .attr('r', 4)
       }
 
-      function setLight (wheelAngle, ledAngle, beat, index) {
+      function setLight (index, ledCount, wheelAngle, ledAngle, beat, parameter) {
         var id = '#led-' + index
 
-        var value = patterns[selectedPattern](wheelAngle, ledAngle, beat, index)
+        var value = patterns[selectedPattern](ledCount, wheelAngle, ledAngle, beat, parameter)
 
         if (!value) {
           value = 0
@@ -263,7 +265,7 @@
              ledAngle += animationAngle
           }
           ledAngle = ledAngle % 360
-          setLight(wheelAngle, ledAngle, beat, index)
+          setLight(index, ledCount, wheelAngle, ledAngle, beat, parameter)
         }
 
         window.requestAnimationFrame(animate)
@@ -294,6 +296,10 @@
         bpm = bpmSlider.value
       }
 
+      function updateParameter () {
+        parameter = parameterSlider.value
+      }
+
       function updateLockRps () {
         lockRps = lockRpsCheckbox.checked
       }
@@ -307,6 +313,9 @@
       var bpmSlider = document.getElementById('range-bpm')
       bpmSlider.addEventListener('input', updateBpm)
 
+      var parameterSlider = document.getElementById('range-parameter')
+      parameterSlider.addEventListener('input', updateParameter)
+
       var lockRpsCheckbox = document.getElementById('checkbox-lock-rps')
       lockRpsCheckbox.addEventListener('input', updateLockRps)
 
@@ -319,6 +328,7 @@
       updateAnimationRps()
       updateBpm()
       updateLockRps()
+      updateParameter()
 
     </script>
   </body>

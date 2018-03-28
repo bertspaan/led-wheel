@@ -55,6 +55,11 @@ def main(debug):
     device = Device()
     device.start()
 
+
+       # except KeyboardInterrupt:
+       #     GPIO.cleanup()       # clean up GPIO on CTRL+C exit
+       # GPIO.cleanup()
+
     # thread = LightMonitorThread(bridge)
     # thread.start()
 

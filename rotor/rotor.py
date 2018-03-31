@@ -39,7 +39,7 @@ def tick(fps, callback):
 
 def update():
 
-    angle = Device.get_angle()
+    angle = device.get_angle()
 
     leds = graphics.calculate(angle)
 

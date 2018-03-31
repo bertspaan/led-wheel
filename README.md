@@ -66,7 +66,7 @@ Set hostname to `rotor`
 
 - Add user `rotor`: https://www.raspberrypi.org/documentation/linux/usage/users.md
   - `sudo adduser rotor`
-  - `sudo usermod -a -G sudo,audio,video,users,netdev,input,spi,i2c,gpio rotor`
+  - `sudo usermod -a -G sudo,audio,video,users,netdev,input,spi,i2c,gpio,bluetooth rotor`
 
 
 

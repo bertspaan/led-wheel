@@ -26,7 +26,7 @@ class Graphics:
 
     def calculate(self, angle):
 
-        leds = [programs.programs['front']((360 / self.led_count * index + angle) % 360, 0.5) for index in range(self.led_count)]
+        leds = [programs.programs['sine_wave']((360 / self.led_count * index + angle) % 360, 0.5) for index in range(self.led_count)]
 
         # led_count, wheel_angle, led_angle, parameter
         # print (programs.programs['single_light'](2))

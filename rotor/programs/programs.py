@@ -1,3 +1,5 @@
+import math
+
 def single_light(angle, parameter):
     if x:
         return 1
@@ -11,15 +13,18 @@ def single_light(angle, parameter):
 # }
 
 def front(angle, parameter):
-
     if angle < 30:
         return 1
     else:
         return 0
 
+def sine_wave(angle, parameter):
+    return (math.radians(angle * 2) + 1) / 2
+
 programs = {
     'single_light': single_light,
-    'front': front
+    'front': front,
+    'sine_wave': sine_wave
 }
 
 # lambda x: x * 2 + 10

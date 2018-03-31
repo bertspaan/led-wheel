@@ -1,5 +1,25 @@
-programs = {
+def single_light(angle, parameter):
+    if x:
+        return 1
+    else:
+        return 2
 
+ # (ledCount, wheelAngle, ledAngle, beat, parameter) {
+# var diff = Math.abs(wheelAngle - ledAngle)
+# if (diff < (360 / (ledCount * 2))) {
+# return 1
+# }
+
+def front(angle, parameter):
+
+    if angle < 30:
+        return 1
+    else:
+        return 0
+
+programs = {
+    'single_light': single_light,
+    'front': front
 }
 
 # lambda x: x * 2 + 10

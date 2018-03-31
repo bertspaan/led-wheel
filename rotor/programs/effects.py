@@ -1,0 +1,7 @@
+# strobe
+# dim
+
+
+effects = {
+
+}

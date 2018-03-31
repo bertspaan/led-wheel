@@ -1,12 +1,15 @@
 import time
 from threading import Thread
-import Adafruit_PCA9685
 import math
 
+try:
+    import Adafruit_PCA9685
+except ModuleNotFoundError:
+    print("Adafruit_PCA9685 not found, continuing regardless!")
+
+
 class PCA9685:
-
     frequency = 1000
-
     ceiling = [1, 14]
 
     mapping = [
@@ -42,12 +45,6 @@ class PCA9685:
         [1, 0]
     ]
 
-    def __init__(self):
-        self.pwms = [
-            Adafruit_PCA9685.PCA9685(0x40),
-            Adafruit_PCA9685.PCA9685(0x41)
-        ]
-
     def set_led(self, index, value):
         led = self.mapping[index]
 
@@ -63,26 +60,31 @@ class PCA9685:
         for pwm in self.pwms:
             pwm.set_pwm_freq(self.frequency)
 
-        led = 0
+        # led = 0
 
-        while True:
-
-            for index in range(0, len(self.mapping)):
-                value = 0
-
-                if abs(led - index) <= 5:
-                    value = (math.sin(abs(led - index) / 2) + 1) / 2
-
-                value = 0
-                self.set_led(index, value)
-
-
-            led = (led + 1) % len(self.mapping)
-            time.sleep(0.02)
+        # while True:
+        #
+        #     for index in range(0, len(self.mapping)):
+        #         value = 0
+        #
+        #         if abs(led - index) <= 5:
+        #             value = (math.sin(abs(led - index) / 2) + 1) / 2
+        #
+        #         value = 0
+        #         self.set_led(index, value)
+        #
+        #
+        #     led = (led + 1) % len(self.mapping)
+        #     time.sleep(0.02)
 
 
 
     def start(self):
+        self.pwms = [
+            Adafruit_PCA9685.PCA9685(0x40),
+            Adafruit_PCA9685.PCA9685(0x41)
+        ]
+
         print("Starting PCA9685!")
         thread = Thread(target=self.run)
         thread.start()

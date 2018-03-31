@@ -2,11 +2,13 @@ import time
 from threading import Thread
 import math
 
+io_available = False
+
 try:
     import Adafruit_PCA9685
+    io_available = True
 except ModuleNotFoundError:
     print("Adafruit_PCA9685 not found, continuing regardless!")
-
 
 class PCA9685:
     frequency = 1000
@@ -46,6 +48,9 @@ class PCA9685:
     ]
 
     def set_led(self, index, value):
+        if not io_available:
+            return
+        
         led = self.mapping[index]
 
         max = 4095
@@ -80,6 +85,9 @@ class PCA9685:
 
 
     def start(self):
+        if not io_available:
+            return
+
         self.pwms = [
             Adafruit_PCA9685.PCA9685(0x40),
             Adafruit_PCA9685.PCA9685(0x41)

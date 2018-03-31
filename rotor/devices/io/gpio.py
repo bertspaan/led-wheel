@@ -4,8 +4,11 @@ from signal import pause
 from collections import deque
 from functools import reduce
 
+io_available = False
+
 try:
-    from gpiozero import Lightsensor
+    from gpiozero import LightSensor
+    io_available = True
 except ModuleNotFoundError:
     print("gpiozero not found, continuing regardless!")
 except RuntimeError:
@@ -49,7 +52,7 @@ class GPIO:
         self.last_rotation = ms
 
     def run(self):
-        sensor_step = Lightsensor(self.pin_step)
+        sensor_step = LightSensor(self.pin_step)
         sensor_step.when_dark = self.step
 
         # sensor_rotation = MotionSensor(self.pin_rotation)
@@ -59,10 +62,12 @@ class GPIO:
         #     print(sensor_rotation.value)
         #     time.sleep(0.1)
 
-
         pause()
 
     def start(self):
+        if not io_available:
+            return
+
         print("Starting GPIO!")
         thread = Thread(target=self.run)
         thread.start()

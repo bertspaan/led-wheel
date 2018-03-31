@@ -17,8 +17,6 @@ class Device:
         for index, value in enumerate(leds):
             self.pca9685.set_led(index, value)
 
-        print (leds)
-
     def start(self):
         self.gpio.start()
         self.pca9685.start()

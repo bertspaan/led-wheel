@@ -6,77 +6,58 @@ import atexit
 import click
 import logging
 import time
+from collections import deque
+from functools import reduce
 
-from devices.raspberry import Device
+from devices.raspberry import Raspberry
+from devices.web_client import WebClient
+
 from graphics import Graphics
 
 logger = logging.getLogger('rotor')
-graphics = Graphics(30)
 
-device = Device()
-device.start()
+class Rotor:
 
-fps = 60
+    frame_durations = deque([], 20)
+    fps = 60
 
-# Functions:
-#  - GPIO interupts for rotation speed
-#  - Read MIDI
-#  - Rotation
-#  - Compute + mix programs
-#  - Set LEDs
+    def __init__(self, led_count):
+        self.graphics = Graphics(led_count)
 
-def tick(fps, callback):
-    frame = 0
-    start = time.perf_counter()
-    while True:
-        callback()
-        frame += 1
-        target = frame / fps
-        passed = time.perf_counter() - start
-        differ = target - passed
-        if differ > 0:
-            time.sleep(differ)
+        self.raspberry = Raspberry()
+        self.web_client = WebClient()
 
-def update():
+    def start(self):
+        self.raspberry.start()
+        self.web_client.start()
 
-    angle = device.get_angle()
+        frame = 0
+        last = time.perf_counter()
 
-    leds = graphics.calculate(angle)
+        frame_ms = 1000 / self.fps
 
+        while True:
+            self.update()
+            frame += 1
 
-    device.update_leds(leds)
-    # ledCount,  parameters
+            current = time.perf_counter()
+            passed = (current - last) * 1000
 
+            self.frame_durations.appendleft(passed)
 
-        #
-        #
-        #
-        #     # reken uit alle programma's + effecten
-        #     # resultaat is byte array
-        #     # stuur naar display
-        #
-        #     # average_time_between_frame_start_and_write!
-        #
-        #     # reken uit hoe lang-ie echt moet slapen
-        #     time.sleep(1 / fps)
-    # print("vissen")
+            if frame % (self.fps * 5) == 0:
+                average = reduce(lambda x, y: x + y, self.frame_durations) / len(self.frame_durations)
+                print (round(1000 / average, 2), 'FPS')
 
-    # var animationMsPerDegree = 1000 / (animationRps * 360)
-    # animationAngle = (animationAngle + (timestamp - lastAnimationAngleTimestamp) * (1 / animationMsPerDegree)) % 360
-    # lastAnimationAngleTimestamp = timestamp
-    #
-    # for (var index = 0; index < ledCount; index++) {
-    # var ledAngle = wheelAngle + (360 / ledCount) * index
-    # if (!lockRps) {
-    #  ledAngle += animationAngle
-    # }
-    # ledAngle = ledAngle % 360
-    # setLight(index, ledCount, wheelAngle, ledAngle, beat, parameter)
-    # }
-    #
-    # window.requestAnimationFrame(animate)
-    # }
+            if frame_ms - passed > 0:
+                time.sleep((frame_ms - passed) / 1000)
 
+            last = current
+
+    def update(self):
+        angle = self.raspberry.get_angle()
+        leds = self.graphics.calculate(angle)
+        self.raspberry.update_leds(leds)
 
 @click.command()
 @click.option('--debug/--no-debug', default=False, help='Enable verbose logging.')
@@ -87,7 +68,8 @@ def main(debug):
     else:
         logging.basicConfig(level=logging.INFO)
 
-    tick(fps, update)
+    rotor = Rotor(30)
+    rotor.start()
 
 if __name__ == '__main__':
     main()

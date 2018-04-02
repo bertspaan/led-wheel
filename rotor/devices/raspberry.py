@@ -1,10 +1,7 @@
-import time
-from threading import Thread
-
 from devices.io.gpio import GPIO
 from devices.io.pca9685 import PCA9685
 
-class Device:
+class Raspberry:
 
     def __init__(self):
         self.gpio = GPIO()

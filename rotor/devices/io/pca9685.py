@@ -47,16 +47,19 @@ class PCA9685:
         [1, 0]
     ]
 
+    def ease_in_exp(self, x):
+        return pow(x, 1 / 0.5)
+
     def set_led(self, index, value):
         if not io_available:
             return
-        
+
         led = self.mapping[index]
 
         max = 4095
         # value between 0 and 1
         on = 0
-        off = round(max * value)
+        off = round(max * self.ease_in_exp(value))
 
         pwm = self.pwms[led[0]]
         pwm.set_pwm(led[1], on, off)
@@ -64,25 +67,6 @@ class PCA9685:
     def run(self):
         for pwm in self.pwms:
             pwm.set_pwm_freq(self.frequency)
-
-        # led = 0
-
-        # while True:
-        #
-        #     for index in range(0, len(self.mapping)):
-        #         value = 0
-        #
-        #         if abs(led - index) <= 5:
-        #             value = (math.sin(abs(led - index) / 2) + 1) / 2
-        #
-        #         value = 0
-        #         self.set_led(index, value)
-        #
-        #
-        #     led = (led + 1) % len(self.mapping)
-        #     time.sleep(0.02)
-
-
 
     def start(self):
         if not io_available:

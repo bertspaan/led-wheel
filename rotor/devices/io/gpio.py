@@ -18,6 +18,7 @@ class GPIO:
 
     current_step = 0
     last_step_ms = 0
+    last_angle = 0
     rps = 0
 
     step_count = 8
@@ -53,6 +54,7 @@ class GPIO:
 
     def rotation(self):
         ms = self.get_ms()
+        # self.current_step = 0
 
         print("Rotation RPS:", round(1000 / (ms - self.last_rotation), 3))
 
@@ -60,13 +62,24 @@ class GPIO:
 
     def get_angle(self):
         ms = self.get_ms()
+        ms_since = ms - self.last_step_ms
+
+        if ms_since > 3000:
+            return self.last_angle
+
         last_step_angle = 360 / self.step_count * self.current_step
-        angle_since = (ms - self.last_step_ms) / 1000 * self.rps * 360
-        return last_step_angle + angle_since
+        angle_since = ms_since / 1000 * self.rps * 360
+
+        self.last_angle = last_step_angle + angle_since
+        return self.last_angle
 
     def run(self):
         sensor_step = Button(self.pin_step, pull_up=True)
         sensor_step.when_pressed = self.step
+
+        sensor_rotation = Button(self.pin_rotation, pull_up=True)
+        sensor_rotation.when_pressed = self.rotation
+
         pause()
 
     def start(self):

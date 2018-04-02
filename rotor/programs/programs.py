@@ -19,7 +19,7 @@ def front(angle, parameter):
         return 0
 
 def sine_wave(angle, parameter):
-    return (math.radians(angle * 2) + 1) / 2
+    return (math.sin(math.radians(angle)) + 1) / 2
 
 programs = {
     'single_light': single_light,

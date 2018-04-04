@@ -1,10 +1,7 @@
 import math
 
-def single_light(angle, parameter):
-    if x:
-        return 1
-    else:
-        return 2
+def single_light(angle, tick, parameter):
+    return 1
 
  # (ledCount, wheelAngle, ledAngle, beat, parameter) {
 # var diff = Math.abs(wheelAngle - ledAngle)
@@ -12,19 +9,33 @@ def single_light(angle, parameter):
 # return 1
 # }
 
-def front(angle, parameter):
+def front(angle, tick, parameter):
     if angle < 30:
         return 1
     else:
         return 0
 
-def sine_wave(angle, parameter):
+def sine_wave(angle, tick, parameter):
     return (math.sin(math.radians(angle)) + 1) / 2
+
+def walk_left_right(angle, tick, parameter):
+    x = (math.sin(math.radians(angle)) + 1) / 2
+    mx = (x + tick / 1000) % 1
+
+    if mx >= 0 and mx < 0.5:
+        return 1
+    else:
+        return 0
+
+
+def fade_left_right(angle, tick, parameter):
+    return 0
 
 programs = {
     'single_light': single_light,
     'front': front,
-    'sine_wave': sine_wave
+    'sine_wave': sine_wave,
+    'walk_left_right': walk_left_right
 }
 
 # lambda x: x * 2 + 10

@@ -33,7 +33,7 @@ class GPIO:
     last_steps = deque([], step_count)
 
     def __init__(self, on_step):
-        self.on_step = on_step
+        self.parent_on_step = on_step
 
     def diffs(self, iterable):
         it = iter(iterable)
@@ -56,8 +56,8 @@ class GPIO:
             average = reduce(lambda x, y: x + y, self.diffs(self.last_steps)) / len(self.last_steps)
             self.rps = 1000 / (average * self.step_count)
             # print("Step RPS:", round(1000 / (average * self.step_count), 3))
-
-        # on_step
+        
+        self.parent_on_step(self.current_step)
 
     def on_rotation(self):
         ms = self.get_ms()

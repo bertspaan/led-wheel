@@ -34,9 +34,8 @@ class Rotor:
         self.raspberry = Raspberry(self.on_step)
         self.web_client = WebClient(self.on_message)
 
-    def on_step(self, step, angle):
+    def on_step(self, step):
         self.step = step
-        self.angle = angle
         self.log()
 
     def on_message(self, message):

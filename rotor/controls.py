@@ -5,7 +5,7 @@ class Controls:
 
     pad_mapping = {
         2: 'fan',
-        3: 'random'
+        3: 'random_beams'
     }
 
     knob_mapping = {
@@ -14,6 +14,7 @@ class Controls:
         2: ('ceiling_led', None, 'zero_to_one'),
 
         4: ('effect', 'blur', 'zero_to_one'),
+        5: ('bpm', None, 'zero_to_one'),
 
         6: ('animation_rps', None, 'minus_one_to_one'),
         7: ('parameter', None, 'zero_to_one')

@@ -54,6 +54,8 @@ class Rotor:
 
             if type == 'parameter':
                 self.graphics.set_parameter(value)
+            elif type == 'bpm':
+                self.graphics.set_bpm(round(10 + value * 190))
             elif type == 'effect':
                 self.graphics.set_effect(name, value)
             elif type == 'animation_rps':
@@ -71,7 +73,7 @@ class Rotor:
         average_duration = reduce(lambda x, y: x + y, self.frame_durations) / len(self.frame_durations)
         rps = self.raspberry.get_rps()
 
-        # print(self.terminal.clear + 'Rotor!\n')
+        print(self.terminal.clear + 'Rotor!\n')
         print('  Direction:', 'clockwise' if self.raspberry.get_direction() == 1 else 'counterclockwise')
         print('  Angle:', round(self.raspberry.get_angle()))
         print('  Step:', self.raspberry.get_step())
@@ -88,6 +90,7 @@ class Rotor:
         print('Current program:')
         print(' ', self.graphics.get_program(), round(self.graphics.get_parameter(), 2))
         print('  Speed:', round(self.graphics.get_animation_rps(), 2), 'RPS')
+        print('  BPM:', self.graphics.get_bpm())
         print('Effects:')
         print('  ', self.graphics.get_effects())
         print('Ceiling LED:', round(self.graphics.get_ceiling_led(), 2))

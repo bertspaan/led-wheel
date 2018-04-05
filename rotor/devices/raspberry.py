@@ -19,7 +19,11 @@ class Raspberry:
     def get_step(self):
         return self.gpio.get_step()
 
-    def update_leds(self, leds):
+    def get_rps(self):
+        return self.gpio.get_rps()
+
+    def update_leds(self, leds, ceiling_led):
+        self.pca9685.set_ceiling_led(ceiling_led)
         for index, value in enumerate(leds):
             self.pca9685.set_led(index, value)
 

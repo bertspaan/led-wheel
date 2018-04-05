@@ -10,11 +10,10 @@ import random
 # p7: waaier
 # p8: random beams
 def in_angle_range(mid_angle, threshold, led_angle):
-    if 180 - abs(180 - angle) < (180 * parameter):
+    if abs((mid_angle - (led_angle + 360)) % 360) <= threshold:
         return 1
     else:
         return 0
-
 
 # def fixed_0(angle, tick, parameter):
 #     if 180 - abs(180 - angle) < (180 * parameter):
@@ -36,12 +35,12 @@ def fan(angle, tick, parameter):
     else:
         return 0
 
-def random(angle, tick, parameter):
+def random_beams(angle, tick, parameter):
     random.seed(tick)
     random_angle = random.randint(0, 359)
-    return in_angle_range(random_angle, 60 * parameter, angle):
+    return in_angle_range(random_angle, 60 * parameter, angle)
 
 programs = {
     'fan': fan,
-    'random': random
+    'random_beams': random_beams
 }

@@ -24,14 +24,11 @@ from programs import effects
 # k7:
 # k8: dim all
 
-
-
-
 class Graphics:
 
     effects = {}
 
-    program = 'front'
+    program = 'fan'
     previous_program = None
     last_program_change_ms = None
     program_transition_ms = 2000
@@ -69,9 +66,11 @@ class Graphics:
 
         self.program = name
 
-    # def set_bpm(self, value)
+    def set_bpm(self, value):
+        self.bpm = value
 
-    # def get_bpm(self)
+    def get_bpm(self):
+        return self.bpm
 
     def set_animation_rps(self, value):
         self.animation_rps = value
@@ -94,7 +93,7 @@ class Graphics:
     def get_effects(self):
         return [(effect, round(value, 2)) for effect, value in self.effects.items()]
 
-    def apply_effects(self, leds, tick):        
+    def apply_effects(self, leds, tick):
         for effect, parameter in self.effects.items():
             leds = effects.effects[effect](leds, parameter, tick)
 
@@ -104,8 +103,8 @@ class Graphics:
         ms = self.get_ms()
         diff_ms = ms - self.last_calculation_ms
 
-        if self.last_program_change_ms + self.program_transition_ms < ms:
-            self.previous_program = None
+        # if self.last_program_change_ms + self.program_transition_ms < ms:
+        #     self.previous_program = None
 
         # if self.previous_program is not None:
         # self.previous_program = self.program
@@ -115,11 +114,12 @@ class Graphics:
         self.animation_angle = self.animation_angle + diff_ms / 1000 * self.animation_rps * 360
         program = programs.programs[self.program]
 
-        tick = ms
-        # bpm
 
-        leds = [float(program(index, (360 / self.led_count * index + angle + self.animation_angle) % 360, tick, self.parameter)) for index in range(self.led_count)]
+        beat_duration = (self.bpm / 60) / 2 * 1000
+        tick = round(ms / beat_duration)
+
+
+        leds = [float(program((360 / self.led_count * index + angle + self.animation_angle) % 360, tick, self.parameter)) for index in range(self.led_count)]
         leds = self.apply_effects(leds, tick)
-
         self.last_calculation_ms = ms
         return (leds, self.ceiling_led)

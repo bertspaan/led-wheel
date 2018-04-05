@@ -21,7 +21,9 @@ class GPIO:
     current_step = 0
     last_step_ms = 0
     last_angle = 0
-    rps = 0
+
+    step_rps = 0
+    rotation_rps = 0
 
     step_count = 8
 
@@ -29,7 +31,7 @@ class GPIO:
     pin_rotation = 20
 
     last_step = 0
-    last_rotation = 0
+    last_rotation_ms = 0
     last_steps = deque([], step_count)
 
     def __init__(self, on_step):
@@ -44,7 +46,7 @@ class GPIO:
             a = b
 
     def get_ms(self):
-        return time.time() * 1000.0
+        return round(time.time() * 1000.0)
 
     def on_step(self):
         ms = self.get_ms()
@@ -54,19 +56,21 @@ class GPIO:
 
         if len(self.last_steps) >= 2:
             average = reduce(lambda x, y: x + y, self.diffs(self.last_steps)) / len(self.last_steps)
-            self.rps = 1000 / (average * self.step_count)
-            # print("Step RPS:", round(1000 / (average * self.step_count), 3))
-        
+            self.step_rps = 1000 / (average * self.step_count)
+
         self.parent_on_step(self.current_step)
 
     def on_rotation(self):
         ms = self.get_ms()
         # self.current_step = 0
+        diff_ms = ms - self.last_rotation_ms
 
-        # print("Rotation RPS:", round(1000 / (ms - self.last_rotation), 3))
+        if diff_ms > 0:
+            self.rotation_rps = 1000 / (diff_ms)
+            self.last_rotation_ms = ms
 
-        self.last_rotation = ms
-
+    def get_rps(self):
+        return (self.step_rps, self.rotation_rps)
 
     def set_direction(self, direction):
         self.direction = direction
@@ -82,7 +86,7 @@ class GPIO:
             return self.last_angle
 
         last_step_angle = 360 / self.step_count * self.current_step
-        angle_since = ms_since / 1000 * self.rps * 360
+        angle_since = ms_since / 1000 * self.step_rps * 360
 
         self.last_angle = last_step_angle + angle_since
         return self.last_angle
@@ -94,8 +98,8 @@ class GPIO:
         sensor_step = Button(self.pin_step, pull_up=True)
         sensor_step.when_pressed = self.on_step
 
-        sensor_rotation = Button(self.pin_rotation, pull_up=True)
-        sensor_rotation.when_pressed = self.on_rotation
+        # sensor_rotation = Button(self.pin_rotation, pull_up=True)
+        # sensor_rotation.when_pressed = self.on_rotation
 
         pause()
 

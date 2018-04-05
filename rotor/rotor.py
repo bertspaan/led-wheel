@@ -4,6 +4,7 @@ import os
 import json
 import atexit
 import time
+import math
 from collections import deque
 from functools import reduce
 from blessings import Terminal
@@ -16,8 +17,8 @@ from controls import Controls
 
 class Rotor:
 
-    frame_durations = deque([], 20)
-    fps = 60
+    frame_durations = deque([1, 1], 20)
+    fps = 200
 
     last_message = {}
 
@@ -36,7 +37,6 @@ class Rotor:
 
     def on_step(self, step):
         self.step = step
-        self.log()
 
     def on_message(self, message):
         self.last_message = message
@@ -49,24 +49,35 @@ class Rotor:
         elif message['event'] == 'knob':
             id = message['data']['id']
             message_value = message['data']['value']
-            self.controls.map_knob(id, message_value)
-            # type, value = self.controls.map_knob(id, message_value)
-        elif message['event'] == 'rotation':
-            direction = message['data']['direction']
-            self.raspberry.set_direction(1 if direction == 'cw' else -1)
 
-        self.log()
+            type, name, value = self.controls.map_knob(id, message_value)
+
+            if type == 'parameter':
+                self.graphics.set_parameter(value)
+            elif type == 'effect':
+                self.graphics.set_effect(name, value)
+            elif type == 'animation_rps':
+                direction = -1 if value < 0 else 1
+                rps = (1 - math.sqrt(1 - math.pow(value, 2))) * 3 * direction
+                self.graphics.set_animation_rps(rps)
+            elif type == 'ceiling_led':
+                self.graphics.set_ceiling_led(value)
+
+        # elif message['event'] == 'rotation':
+        #     direction = message['data']['direction']
+        #     self.raspberry.set_direction(1 if direction == 'cw' else -1)
 
     def log(self):
         average_duration = reduce(lambda x, y: x + y, self.frame_durations) / len(self.frame_durations)
+        rps = self.raspberry.get_rps()
 
-        print(self.terminal.clear + 'Rotor!\n')
+        # print(self.terminal.clear + 'Rotor!\n')
         print('  Direction:', 'clockwise' if self.raspberry.get_direction() == 1 else 'counterclockwise')
-        print('  Angle:', self.raspberry.get_angle())
+        print('  Angle:', round(self.raspberry.get_angle()))
         print('  Step:', self.raspberry.get_step())
         print('  Rotations per second:')
-        print('    Step sensor:')
-        print('    Rotation sensor:')
+        print('    Step sensor:', round(rps[0], 2))
+        print('    Rotation sensor:', round(rps[1], 2))
 
         print('Frames per second: ', round(1000 / average_duration, 2))
 
@@ -75,10 +86,12 @@ class Rotor:
         print('  Last message:', self.last_message)
 
         print('Current program:')
-        print('  ', self.graphics.get_program(), self.graphics.get_parameter())
-
+        print(' ', self.graphics.get_program(), round(self.graphics.get_parameter(), 2))
+        print('  Speed:', round(self.graphics.get_animation_rps(), 2), 'RPS')
         print('Effects:')
         print('  ', self.graphics.get_effects())
+        print('Ceiling LED:', round(self.graphics.get_ceiling_led(), 2))
+
 
     def start(self):
         self.raspberry.start()
@@ -108,8 +121,8 @@ class Rotor:
 
     def update(self):
         angle = self.raspberry.get_angle()
-        leds = self.graphics.calculate(angle)
-        self.raspberry.update_leds(leds)
+        leds, ceiling_led = self.graphics.calculate(angle)
+        self.raspberry.update_leds(leds, ceiling_led)
 
 def main():
     rotor = Rotor(30)

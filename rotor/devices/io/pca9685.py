@@ -12,9 +12,9 @@ except ModuleNotFoundError:
 
 class PCA9685:
     frequency = 1000
-    ceiling = [1, 14]
+    ceiling_led_mapping = [1, 14]
 
-    mapping = [
+    led_mapping = [
         [0, 0], # First of first PCA9685
         [0, 1],
         [0, 2],
@@ -50,19 +50,28 @@ class PCA9685:
     def ease_in_exp(self, x):
         return pow(x, 1 / 0.5)
 
+    def set_ceiling_led(self, value):
+        if not io_available:
+            return
+
+        led = self.ceiling_led_mapping
+        pwm = self.pwms[led[0]]
+        self.set_pwm_led(pwm, led[1], value)
+
     def set_led(self, index, value):
         if not io_available:
             return
 
-        led = self.mapping[index]
+        led = self.led_mapping[index]
+        pwm = self.pwms[led[0]]
+        self.set_pwm_led(pwm, led[1], value)
 
+    def set_pwm_led(self, pwm, index, value):
+        # value is between 0 and 1
         max = 4095
-        # value between 0 and 1
         on = 0
         off = round(max * self.ease_in_exp(value))
-
-        pwm = self.pwms[led[0]]
-        pwm.set_pwm(led[1], on, off)
+        pwm.set_pwm(index, on, off)
 
     def run(self):
         for pwm in self.pwms:

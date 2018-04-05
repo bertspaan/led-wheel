@@ -3,27 +3,58 @@ import time
 from programs import programs
 from programs import effects
 
+
+# p1: fixed angle light 0
+# p2: fixed angle light 0 + 15
+# p3: fixed angle light elke drie
+# p4: fixed angle light: eerste helft
+# p5: 10, 20, 30 -> 5, 15, 25
+# p6: 1-10, 11-20, 21-30
+# p7: waaier
+# p8: random beams
+
+# snake
+
+# k1: volume/parameter - lineair
+# k2: chase speed: exp
+# k3: animatiesnelheid: exp
+# k4: dim ceiling
+# k5: strobe: exp
+# k6: blur
+# k7:
+# k8: dim all
+
+
+
+
 class Graphics:
 
-    effects = {
-        # 'dim': 0.6,
-        # 'strobe': 0.2
-    }
+    effects = {}
+
     program = 'front'
+    previous_program = None
+    last_program_change_ms = None
+    program_transition_ms = 2000
+
     parameter = 0
+    bpm = 120
 
     ceiling_led = 0
 
     animation_angle = 0
-    animation_rps = 0.2
+    animation_rps = 0
+
     last_calculation_ms = 0
 
     def __init__(self, led_count, transition=2000):
         self.led_count = led_count
-        self.transition = transition
+        self.program_transition_ms = transition
 
     def set_ceiling_led(self, value):
         self.ceiling_led = value
+
+    def get_ceiling_led(self):
+        return self.ceiling_led
 
     def set_parameter(self, value):
         self.parameter = value
@@ -32,12 +63,21 @@ class Graphics:
         return self.parameter
 
     def set_program(self, name):
+        if self.program_transition_ms > 0:
+            self.previous_program = self.program
+            self.last_program_change_ms = self.get_ms()
+
         self.program = name
-    #     if self.transition > 0:
-    #
-    #     else:
-    #
-    #
+
+    # def set_bpm(self, value)
+
+    # def get_bpm(self)
+
+    def set_animation_rps(self, value):
+        self.animation_rps = value
+
+    def get_animation_rps(self):
+        return self.animation_rps
 
     def get_program(self):
         return self.program
@@ -52,28 +92,34 @@ class Graphics:
             del self.effects[name]
 
     def get_effects(self):
-        return [(effect, value) for effect, value in self.effects.items()]
+        return [(effect, round(value, 2)) for effect, value in self.effects.items()]
 
-    def apply_effects(self, led):
+    def apply_effects(self, leds, tick):        
         for effect, parameter in self.effects.items():
-            led = effects.effects[effect](led, parameter)
+            leds = effects.effects[effect](leds, parameter, tick)
 
-        return led
+        return leds
 
     def calculate(self, angle):
         ms = self.get_ms()
         diff_ms = ms - self.last_calculation_ms
 
+        if self.last_program_change_ms + self.program_transition_ms < ms:
+            self.previous_program = None
+
+        # if self.previous_program is not None:
+        # self.previous_program = self.program
+        # self.last_program_change_ms = self.get_ms()
+
+
         self.animation_angle = self.animation_angle + diff_ms / 1000 * self.animation_rps * 360
         program = programs.programs[self.program]
 
-        tick = 0
-        parameter = 0
+        tick = ms
+        # bpm
 
-        leds = [program((360 / self.led_count * index + angle + self.animation_angle) % 360, tick, parameter) for index in range(self.led_count)]
-        leds = map(self.apply_effects, leds)
+        leds = [float(program(index, (360 / self.led_count * index + angle + self.animation_angle) % 360, tick, self.parameter)) for index in range(self.led_count)]
+        leds = self.apply_effects(leds, tick)
 
-        # led_count, wheel_angle, led_angle, parameter
-        # print (programs.programs['single_light'](2))
         self.last_calculation_ms = ms
-        return leds
+        return (leds, self.ceiling_led)

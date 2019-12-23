@@ -7,7 +7,7 @@ io_available = False
 try:
     import Adafruit_PCA9685
     io_available = True
-except ModuleNotFoundError:
+except ImportError:
     print("Adafruit_PCA9685 not found, continuing regardless!")
 
 class PCA9685:

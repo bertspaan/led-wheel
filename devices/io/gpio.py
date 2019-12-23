@@ -9,7 +9,7 @@ io_available = False
 try:
     from gpiozero import LightSensor, InputDevice, SmoothedInputDevice, Button
     io_available = True
-except ModuleNotFoundError:
+except ImportError:
     print("gpiozero not found, continuing regardless!")
 except RuntimeError:
     print("Error importing gpiozero! This is probably because you need superuser privileges!")

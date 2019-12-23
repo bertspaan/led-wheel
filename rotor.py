@@ -10,10 +10,9 @@ from functools import reduce
 from blessings import Terminal
 
 from devices.raspberry import Raspberry
-from devices.web_client import WebClient
+from devices.websockets_server import WebsocketsServer
 
 from graphics import Graphics
-from controls import Controls
 
 class Rotor:
 
@@ -30,10 +29,9 @@ class Rotor:
         print(self.terminal.enter_fullscreen)
 
         self.graphics = Graphics(led_count)
-        self.controls = Controls() #config
 
         self.raspberry = Raspberry(self.on_step)
-        self.web_client = WebClient(self.on_message)
+        self.websockets_server = WebsocketsServer(self.on_message)
 
     def on_step(self, step):
         self.step = step
@@ -48,43 +46,28 @@ class Rotor:
         #   "value": "value"
         # }
 
-        if message['event'] == 'pad':
-            id = message['data']['id']
-            program = self.controls.map_pad(id)
-            if program is not None:
-                self.graphics.set_program(program)
-
+        if message['type'] == 'program':
+            program_id = message['id']
+            # TODO: check if program_id exists!
+            if program_id is not None:
+                self.graphics.set_program(program_id)
             self.log()
-        elif message['event'] == 'knob':
-            id = message['data']['id']
-            message_value = message['data']['value']
 
-            type, name, value = self.controls.map_knob(id, message_value)
+        elif message['type'] == 'effect':
+            effect_id = message['id']
+            value = message['value']
+            # TODO: check if effect_id exists!
+            if effect_id is not None:
+                self.graphics.set_effect(effect_id, value)
+            self.log()
 
-            if type == 'parameter':
+        elif message['type'] == 'parameter':
+            parameter_id = message['id']
+            value = message['value']
+
+            # TODO: check if parameter_id exists!
+            if parameter_id is not None:
                 self.graphics.set_parameter(value)
-            elif type == 'bpm':
-                bpm_min = 30
-                bpm_max = 600
-                self.graphics.set_bpm(round(bpm_min + value * (bpm_max - bpm_min)))
-            elif type == 'effect':
-                self.graphics.set_effect(name, value)
-            elif type == 'animation_rps':
-                animation_direction = -1 if value < 0 else 1
-                rps = (1 - math.sqrt(1 - math.pow(value, 2))) * 4 * animation_direction
-                self.graphics.set_animation_rps(rps)
-            elif type == 'ceiling_led':
-                if value <= 0:
-                    self.graphics.set_ceiling_led(value + 1)
-                    self.graphics.set_ceiling_led_strobe(0)
-                else:
-                    self.graphics.set_ceiling_led(1)
-                    self.graphics.set_ceiling_led_strobe(1 - value * 0.8)
-
-        elif message['event'] == 'rotation':
-            direction = message['data']['direction']
-            self.raspberry.set_direction(1 if direction == 'cw' else -1)
-
             self.log()
 
     def log(self):
@@ -102,7 +85,7 @@ class Rotor:
         print('Frames per second: ', round(1000 / average_duration, 2))
 
         print('WebSockets:')
-        print('  Connections:', self.web_client.get_connection_count())
+        print('  Connections:', self.websockets_server.get_connection_count())
         print('  Last message:', self.last_message)
 
         print('Current program:')
@@ -116,7 +99,7 @@ class Rotor:
 
     def start(self):
         self.raspberry.start()
-        self.web_client.start()
+        self.websockets_server.start()
 
         frame = 0
         last = time.perf_counter()

@@ -41,11 +41,20 @@ class Rotor:
     def on_message(self, message):
         self.last_message = message
 
+        # message is of form:
+        # {
+        #   "type": "program|effect|parameter",
+        #   "id": "program_id|effect_id|parameter_id",
+        #   "value": "value"
+        # }
+
         if message['event'] == 'pad':
             id = message['data']['id']
             program = self.controls.map_pad(id)
             if program is not None:
                 self.graphics.set_program(program)
+
+            self.log()
         elif message['event'] == 'knob':
             id = message['data']['id']
             message_value = message['data']['value']
@@ -55,19 +64,28 @@ class Rotor:
             if type == 'parameter':
                 self.graphics.set_parameter(value)
             elif type == 'bpm':
-                self.graphics.set_bpm(round(10 + value * 190))
+                bpm_min = 30
+                bpm_max = 600
+                self.graphics.set_bpm(round(bpm_min + value * (bpm_max - bpm_min)))
             elif type == 'effect':
                 self.graphics.set_effect(name, value)
             elif type == 'animation_rps':
-                direction = -1 if value < 0 else 1
-                rps = (1 - math.sqrt(1 - math.pow(value, 2))) * 3 * direction
+                animation_direction = -1 if value < 0 else 1
+                rps = (1 - math.sqrt(1 - math.pow(value, 2))) * 4 * animation_direction
                 self.graphics.set_animation_rps(rps)
             elif type == 'ceiling_led':
-                self.graphics.set_ceiling_led(value)
+                if value <= 0:
+                    self.graphics.set_ceiling_led(value + 1)
+                    self.graphics.set_ceiling_led_strobe(0)
+                else:
+                    self.graphics.set_ceiling_led(1)
+                    self.graphics.set_ceiling_led_strobe(1 - value * 0.8)
 
-        # elif message['event'] == 'rotation':
-        #     direction = message['data']['direction']
-        #     self.raspberry.set_direction(1 if direction == 'cw' else -1)
+        elif message['event'] == 'rotation':
+            direction = message['data']['direction']
+            self.raspberry.set_direction(1 if direction == 'cw' else -1)
+
+            self.log()
 
     def log(self):
         average_duration = reduce(lambda x, y: x + y, self.frame_durations) / len(self.frame_durations)

@@ -4,20 +4,27 @@ class Controls:
     mid_threshold = 8
 
     pad_mapping = {
-        2: 'fan',
-        3: 'random_beams'
+        # 4: 'fan',
+        # 5: 'random_beams',
+        6: 'fixed_one',
+        7: 'fixed_two',
+
+        # 0: 'walk_one_fifth',
+        # 1: 'walk_thirds',
+        2: 'fixed_half',
+        3: 'fixed_one_fifth'
     }
 
     knob_mapping = {
-        0: ('effect', 'strobe', 'zero_to_one'),
-        1: ('effect', 'dim', 'zero_to_one'),
-        2: ('ceiling_led', None, 'zero_to_one'),
+        0: ('parameter', None, 'zero_to_one'),
+        1: ('bpm', None, 'zero_to_one'),
+        2: ('animation_rps', None, 'minus_one_to_one'),
+        3: ('ceiling_led', None, 'minus_one_to_one'),
 
-        4: ('effect', 'blur', 'zero_to_one'),
-        5: ('bpm', None, 'zero_to_one'),
-
-        6: ('animation_rps', None, 'minus_one_to_one'),
-        7: ('parameter', None, 'zero_to_one')
+        4: ('effect', 'dim', 'zero_to_one'),
+        5: ('effect', 'blur', 'zero_to_one'),
+        6: ('effect', 'strobe', 'zero_to_one'),
+        7: ('effect', 'motion_blur', 'zero_to_one')
     }
 
     def __init__(self):

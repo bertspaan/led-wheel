@@ -88,7 +88,13 @@ class GPIO:
         last_step_angle = 360 / self.step_count * self.current_step
         angle_since = ms_since / 1000 * self.step_rps * 360
 
-        self.last_angle = last_step_angle + angle_since
+        # [100, 120, 140, 160, 180]
+        #      20   20   20  20       = 20
+        #
+        # [100, 102,  99, 103,  98]
+        #     2     -3   4    -5      = -.5
+
+        self.last_angle = last_step_angle + angle_since * self.direction
         return self.last_angle
 
     def get_step(self):

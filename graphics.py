@@ -1,54 +1,45 @@
 import time
+import math
+from operator import add
 
 from programs import programs
 from programs import effects
 
-
-# p1: fixed angle light 0
-# p2: fixed angle light 0 + 15
-# p3: fixed angle light elke drie
-# p4: fixed angle light: eerste helft
-# p5: 10, 20, 30 -> 5, 15, 25
-# p6: 1-10, 11-20, 21-30
-# p7: waaier
-# p8: random beams
-
-# snake
-
-# k1: volume/parameter - lineair
-# k2: chase speed: exp
-# k3: animatiesnelheid: exp
-# k4: dim ceiling
-# k5: strobe: exp
-# k6: blur
-# k7:
-# k8: dim all
-
 class Graphics:
 
-    effects = {}
+    effects = {
+        'blur': 0,
+        'motion_blur': 0,
+        'strobe': 0,
+        'dim': 0
+    }
 
-    program = 'fan'
+    program = 'fixed_one'
     previous_program = None
     last_program_change_ms = None
-    program_transition_ms = 2000
 
-    parameter = 0
+    parameter = 0.5
     bpm = 120
 
+    beat = 0
+
     ceiling_led = 0
+    ceiling_led_strobe = 0
 
     animation_angle = 0
     animation_rps = 0
 
     last_calculation_ms = 0
 
-    def __init__(self, led_count, transition=2000):
+    def __init__(self, led_count, transition=500):
         self.led_count = led_count
         self.program_transition_ms = transition
 
     def set_ceiling_led(self, value):
         self.ceiling_led = value
+
+    def set_ceiling_led_strobe(self, value):
+        self.ceiling_led_strobe = value
 
     def get_ceiling_led(self):
         return self.ceiling_led
@@ -85,17 +76,18 @@ class Graphics:
         return time.time() * 1000.0
 
     def set_effect(self, name, value=0):
-        if value > 0:
-            self.effects[name] = value
-        else:
-            del self.effects[name]
+        self.effects[name] = value
 
     def get_effects(self):
         return [(effect, round(value, 2)) for effect, value in self.effects.items()]
 
-    def apply_effects(self, leds, tick):
+    def run_program(self, name, angle, beat):
+        program = programs.programs[name]
+        return [float(program((360 / self.led_count * index + angle + self.animation_angle) % 360, beat, self.parameter)) for index in range(self.led_count)]
+
+    def apply_effects(self, leds, beat, ms):
         for effect, parameter in self.effects.items():
-            leds = effects.effects[effect](leds, parameter, tick)
+            leds = effects.effects[effect](leds, parameter, beat, ms)
 
         return leds
 
@@ -103,23 +95,26 @@ class Graphics:
         ms = self.get_ms()
         diff_ms = ms - self.last_calculation_ms
 
-        # if self.last_program_change_ms + self.program_transition_ms < ms:
-        #     self.previous_program = None
-
-        # if self.previous_program is not None:
-        # self.previous_program = self.program
-        # self.last_program_change_ms = self.get_ms()
-
+        if self.last_program_change_ms is not None and self.last_program_change_ms + self.program_transition_ms < ms:
+            self.previous_program = None
 
         self.animation_angle = self.animation_angle + diff_ms / 1000 * self.animation_rps * 360
-        program = programs.programs[self.program]
 
+        beat_duration = 1 / (self.bpm / 60) * 1000
 
-        beat_duration = (self.bpm / 60) / 2 * 1000
-        tick = round(ms / beat_duration)
+        self.beat = self.beat + diff_ms / beat_duration
+        beat = math.floor(self.beat)
 
+        leds = self.run_program(self.program, angle, beat)
 
-        leds = [float(program((360 / self.led_count * index + angle + self.animation_angle) % 360, tick, self.parameter)) for index in range(self.led_count)]
-        leds = self.apply_effects(leds, tick)
+        if self.previous_program is not None:
+            previous_leds = self.run_program(self.previous_program, angle, beat)
+            ratio = round((ms - self.last_program_change_ms) / self.program_transition_ms, 3)
+            leds = list(map(add, [ratio * led for led in leds], [(1 - ratio) * led for led in previous_leds]))
+
+        leds = self.apply_effects(leds, beat, ms)
         self.last_calculation_ms = ms
-        return (leds, self.ceiling_led)
+
+        ceiling_leds = effects.effects['strobe']([self.ceiling_led], self.ceiling_led_strobe, beat, ms)
+
+        return (leds, ceiling_leds[0])
